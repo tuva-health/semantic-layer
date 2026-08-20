@@ -1,5 +1,8 @@
 # Tuva Semantic Layer
 
+[Documentation](https://www.thetuvaproject.com/semantic-layer) |
+[Source](https://github.com/tuva-health/semantic-layer)
+
 `semantic_layer` is the standalone dbt package that replaces the semantic-layer
 mart formerly bundled with Tuva Core. The first standalone release migrates the
 v0.18.0 semantic model onto the Tuva 1.0 package architecture and produces an

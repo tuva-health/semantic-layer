@@ -11,4 +11,5 @@ logs/
 .idea/
 .vscode/
 /profiles.yml
+integration_tests/creds.json
 .codex_tmp/
