@@ -41,7 +41,7 @@ latest 1.0.0 changes.
 | --- | --- | --- |
 | `the_tuva_project` (Tuva Core) | 1.0.0 | `f90d5fb3c34db92985fa3bc04ef9e44073c634b4` |
 | `ahrq_quality_indicators` | 1.0.0 | `77596dee5b32dd94806c55c2c0218a2c3149f05c` |
-| `ccsr` | 1.0.0 | `b7d615f8eb008a4f9086bef726097c75f1433da3` |
+| `ccsr` | 1.0.0 | `60e3061b6854035f0989a8c1f23b04d2d4a7605a` |
 | `cms_hcc` | 1.0.0 | `bafb601e12b79a394c368c18fa948ec7dc62023a` |
 | `nyu_ed_classification` | 1.0.0 | `ad21be1cd30bb0cdfa92ea765017b07ab37ff856` |
 | `quality_measures` | 1.0.0 | `b2cfd190b8da9e7f37288f42b4414f1343343389` |
@@ -136,16 +136,17 @@ scripts/dbt-local build --full-refresh --indirect-selection cautious \
   --vars '{clinical_enabled: false, provider_attribution_enabled: false}'
 ```
 
-## Release blocker: package-owned seed assets
+## Package-owned seed assets
 
-The integration harness temporarily reads the immutable v0.18 encounter-key
-assets from `value-sets/1.0.0`. Before the standalone package can be released,
-publish these package-owned gzip assets under `semantic-layer/1.0.0`:
+The root `data_assets.yml` declares the package-owned encounter-key assets,
+which publish as flat gzip objects under `semantic-layer/<package-version>/`:
 
 - `semantic_layer__encounter_group_sk.csv.gz`
 - `semantic_layer__encounter_type_sk.csv.gz`, including the long-term acute care
   row with key `32`
 
-After publication, remove the private
-`_semantic_layer_use_legacy_seed_assets` integration variable and validate the
-normal package asset path.
+The complete reviewed source CSVs live under `data_assets/sources/1.0.0/`; the
+CSV files under `seeds/` remain header-only dbt loader contracts. For the 1.0.0
+asset release, Tuva Maintenance pins the raw source URLs to the exact reviewed
+package commit, canonicalizes the gzip bytes, publishes S3 first, and verifies
+the GCS and Azure mirrors before the package release is tagged.

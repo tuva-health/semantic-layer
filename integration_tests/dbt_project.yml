@@ -29,7 +29,6 @@ vars:
   # Tuva Core resolves assets from tuva-core/<installed-package-version>/.
   custom_bucket_name: tuva-public-resources  # Default public bucket for package data assets.
   tuva_seed_buckets: {}                # Optional per-family bucket overrides, keyed by seed family.
-  _semantic_layer_use_legacy_seed_assets: true  # Test-only bridge until semantic-layer/1.0.0 assets are published.
 
   ## Standalone package behavior
   # Importing a standalone package enables it. These vars change package behavior;
