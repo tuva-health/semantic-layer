@@ -1,0 +1,14 @@
+target/
+dbt_packages/
+package-lock.yml
+logs/
+*.log
+*.duckdb
+*.duckdb.wal
+.venv/
+.env
+.DS_Store
+.idea/
+.vscode/
+/profiles.yml
+.codex_tmp/

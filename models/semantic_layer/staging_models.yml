@@ -1,0 +1,56 @@
+version: 2
+
+models:
+  - name: semantic_layer__stg_ahrq_quality_indicators__pqi_summary
+    description: Selected AHRQ PQI numerator encounters from the AHRQ Quality Indicators package.
+
+  - name: semantic_layer__stg_cms_hcc__patient_risk_factors
+    description: Current CMS-HCC patient risk factors with payer and model context.
+
+  - name: semantic_layer__stg_cms_hcc__patient_risk_scores
+    description: Current annual CMS-HCC patient risk scores with payer context.
+
+  - name: semantic_layer__stg_cms_hcc__patient_risk_scores_monthly
+    description: Monthly CMS-HCC patient risk scores with collection, payer, and risk-model context.
+
+  - name: semantic_layer__stg_core__cost
+    description: Core member-month cost measures at the full coverage grain.
+
+  - name: semantic_layer__stg_core__eligibility
+    description: Distinct data sources represented in Core eligibility.
+
+  - name: semantic_layer__stg_core__encounter
+    description: Claim-derived Core encounter fields used by semantic facts and dimensions.
+
+  - name: semantic_layer__stg_core__medical_claim
+    description: Core medical-claim fields used by semantic facts and dimensions.
+
+  - name: semantic_layer__stg_core__member_month
+    description: Core member-month and attribution fields at the full coverage grain.
+
+  - name: semantic_layer__stg_core__patient
+    description: Core patient demographics used by the member dimension.
+
+  - name: semantic_layer__stg_core__pharmacy_claim
+    description: Core pharmacy-claim fields used by the pharmacy fact.
+
+  - name: semantic_layer__stg_core__practitioner
+    description: Source-scoped Core practitioner identifiers and specialties.
+
+  - name: semantic_layer__stg_hcc_suspecting__list_rollup
+    description: CMS-HCC suspecting gaps with payer and model-version context.
+
+  - name: semantic_layer__stg_nyu_ed_classification__summary
+    description: Source-scoped NYU ED classification results.
+
+  - name: semantic_layer__stg_quality_measures__summary_long
+    description: Long-form quality-measure results from the Quality Measures package.
+
+  - name: semantic_layer__stg_readmissions__encounter_augmented
+    description: Source-scoped augmented admission encounters from the Quality Measures package.
+
+  - name: semantic_layer__stg_readmissions__readmission_summary
+    description: Readmission results augmented with encounter data source.
+
+  - name: semantic_layer__stg_terminology__calendar
+    description: Core calendar attributes used by the semantic date dimension.

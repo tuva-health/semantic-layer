@@ -1,0 +1,112 @@
+name: 'integration_tests'
+version: '1.0.0'
+config-version: 2
+
+profile: default
+
+vars:
+  ## Domain enablement
+  # These vars default to false in Tuva Core when omitted.
+  # Integration tests set them true so local and CI builds exercise the full Tuva Core path.
+  claims_enabled: true                 # Enables payer/claims input layer, normalization, claims preprocessing, and claims-derived core tables.
+  clinical_enabled: true               # Enables provider/clinical input layer, normalization, and clinical-derived core tables.
+  provider_attribution_enabled: true   # Enables provider attribution input and claims preprocessing attribution. Requires claims_enabled.
+  parity_enabled: false                # Keeps optional parity metric models out of normal development and CI builds.
+
+  ## Data quality
+  # Enables neutral data_quality structural/logical/analytical result models.
+  # Production projects can leave this false/omitted unless they want to build these queryable result tables.
+  data_quality_enabled: false           # Keeps optional data-quality result models out of this compatibility run.
+  enable_data_quality_failure_keys: false  # Adds the optional key-only logical failure drilldown table.
+  data_quality_domain_input_requirements: []  # Optional additional component-to-input dependency mappings.
+
+  ## Synthetic data validation
+  # These vars are for this integration_tests project. They are not normal production Tuva Core settings.
+  use_synthetic_data: true             # Maps package synthetic seeds into this project's Input Layer models.
+  synthetic_data_size: small           # Synthetic payload to load: small or large.
+
+  ## Data asset releases and buckets
+  # Tuva Core resolves assets from tuva-core/<installed-package-version>/.
+  custom_bucket_name: tuva-public-resources  # Default public bucket for package data assets.
+  tuva_seed_buckets: {}                # Optional per-family bucket overrides, keyed by seed family.
+  _semantic_layer_use_legacy_seed_assets: true  # Test-only bridge until semantic-layer/1.0.0 assets are published.
+
+  ## Standalone package behavior
+  # Importing a standalone package enables it. These vars change package behavior;
+  # none is a package-level on/off switch or an external-asset version pin.
+  ccsr:
+    wide_condition_enabled: false      # The semantic layer needs only the long diagnosis mapping.
+    wide_procedure_enabled: false      # The semantic layer does not consume procedure CCSR outputs.
+    record_type: ip                    # Category logic: ip (inpatient) or op (outpatient).
+    dxccsr_version: "'2023.1'"         # HCUP diagnosis CCSR version stored in package outputs.
+    prccsr_version: "'2023.1'"         # HCUP procedure CCSR version stored in package outputs.
+
+  cms_hcc:
+    cms_hcc_payment_year: 2018         # Matches the shipped small synthetic dataset.
+    hcc_recapture_chronic_hccs: false  # False uses package-owned chronic-HCC definitions; true uses chronic_hccs.
+    hcc_recapture_suspect_list: false  # True additionally requires a user-supplied suspect_hccs relation.
+
+  quality_measures:
+    quality_measures_period_end: "2018-12-31"  # Matches the shipped small synthetic dataset.
+
+  ## Schema naming
+  # Optional prefix for output schemas, e.g. dev_aaron_core, dev_aaron_input_layer.
+  # tuva_schema_prefix: dev_aaron
+
+  ## Run metadata
+  # Root package default is the dbt run_started_at timestamp in UTC.
+  # Uncomment to force a fixed value in the tuva_last_run column.
+  # tuva_last_run: "2026-01-01 00:00:00"
+
+  ## Extension columns
+  # Allows custom input columns with a prefix to flow through selected Tuva Core outputs.
+  # passthrough:
+  #   prefix: 'x_'                     # Prefix used to identify extension columns.
+  #   strip: false                     # Whether to strip the prefix in final output aliases.
+
+  ## Provider attribution
+  # Optional current-panel as-of date override for assigned_beneficiaries_current.
+  # provider_attribution_as_of_date: "2026-01-01"
+
+  ## Warehouse-specific seed loading
+  # Microsoft Fabric public storage endpoint used by seed loading macros.
+  # tuva_seed_fabric_storage_root: "https://tuvapublicresources.blob.core.windows.net"
+  # Warehouse-specific S3 bucket override used by seed loading macros.
+  # tuva_seeds_s3_bucket: tuva-public-resources
+  # Optional prefix under the selected S3 bucket.
+  # tuva_seeds_s3_key_prefix: ""
+
+  ## Internal test hooks
+  # Local filesystem root for validating staged package data assets with DuckDB.
+  # The root must contain <bucket>/<package>/<version>/...; omit in normal projects.
+  # tuva_seed_duckdb_storage_root: "/tmp/tuva-data-assets"
+  # Internal dbt unit-test hook for extension-column tests; do not set in normal projects.
+  # _extension_columns_override: []
+
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+
+dispatch:
+  - macro_namespace: 'the_tuva_project'
+    search_order: ['integration_tests', 'the_tuva_project']
+  - macro_namespace: 'dbt_utils'
+    search_order: ['integration_tests', 'the_tuva_project', 'dbt_utils']
+
+
+models:
+  integration_tests:
+    +materialized: table
+    +schema: |
+      {%- if var('tuva_schema_prefix', none) is not none and var('tuva_schema_prefix', none) | trim != '' -%}{{ var('tuva_schema_prefix') }}_input_layer{%- else -%}input_layer{%- endif -%}
+flags:
+  require_generic_test_arguments_property: true
+  require_ref_searches_node_package_before_root: true

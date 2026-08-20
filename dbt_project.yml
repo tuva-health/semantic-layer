@@ -1,0 +1,42 @@
+name: 'semantic_layer'
+version: '1.0.0'
+config-version: 2
+require-dbt-version: ">=1.10.0"
+
+profile: default
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  tuva_last_run: '{{ run_started_at.astimezone(modules.pytz.timezone("UTC")) }}'
+  semantic_layer_specialty_tier_threshold: 950
+
+seeds:
+  semantic_layer:
+    semantic_layer__encounter_group_sk:
+      +post-hook: "{{ semantic_layer.load_semantic_layer_seed('semantic_layer__encounter_group_sk.csv.gz') }}"
+    semantic_layer__encounter_type_sk:
+      +post-hook: "{{ semantic_layer.load_semantic_layer_seed('semantic_layer__encounter_type_sk.csv.gz') }}"
+
+models:
+  semantic_layer:
+    +schema: |
+      {%- if var('tuva_schema_prefix', none) is not none and var('tuva_schema_prefix', none) | trim != '' -%}{{ var('tuva_schema_prefix') }}_semantic_layer{%- else -%}semantic_layer{%- endif -%}
+    +group: semantic_layer
+    +tags: [semantic_layer]
+    semantic_layer:
+      staging:
+        +materialized: ephemeral
+        +access: private
+      final:
+        +materialized: table
+        +access: public

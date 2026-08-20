@@ -1,0 +1,52 @@
+version: 2
+
+seeds:
+  - name: semantic_layer__encounter_group_sk
+    description: Stable semantic keys for Tuva encounter groups.
+    config:
+      schema: |
+        {%- if var('tuva_schema_prefix', none) is not none and var('tuva_schema_prefix', none) | trim != '' -%}{{ var('tuva_schema_prefix') }}_semantic_layer{%- else -%}semantic_layer{%- endif -%}
+      alias: _value_set_encounter_group_sk
+      tags: [semantic_layer]
+      column_types:
+        encounter_group: |
+          {%- if target.type in ('bigquery', 'databricks') -%}string{%- else -%}varchar(256){%- endif -%}
+        encounter_group_sk: |
+          {%- if target.type in ('bigquery', 'databricks') -%}string{%- else -%}varchar(256){%- endif -%}
+    columns:
+      - name: encounter_group
+        description: Tuva encounter-group label.
+        data_tests: [not_null, unique]
+      - name: encounter_group_sk
+        description: Immutable semantic key.
+        data_tests: [not_null, unique]
+
+  - name: semantic_layer__encounter_type_sk
+    description: Stable semantic keys and group mappings for Tuva encounter types.
+    config:
+      schema: |
+        {%- if var('tuva_schema_prefix', none) is not none and var('tuva_schema_prefix', none) | trim != '' -%}{{ var('tuva_schema_prefix') }}_semantic_layer{%- else -%}semantic_layer{%- endif -%}
+      alias: _value_set_encounter_type_sk
+      tags: [semantic_layer]
+      column_types:
+        encounter_type: |
+          {%- if target.type in ('bigquery', 'databricks') -%}string{%- else -%}varchar(256){%- endif -%}
+        encounter_type_sk: |
+          {%- if target.type in ('bigquery', 'databricks') -%}string{%- else -%}varchar(256){%- endif -%}
+        encounter_group_sk: |
+          {%- if target.type in ('bigquery', 'databricks') -%}string{%- else -%}varchar(1000){%- endif -%}
+    columns:
+      - name: encounter_type
+        description: Tuva encounter-type label.
+        data_tests: [not_null, unique]
+      - name: encounter_type_sk
+        description: Immutable semantic key.
+        data_tests: [not_null, unique]
+      - name: encounter_group_sk
+        description: Parent encounter-group key.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('semantic_layer__encounter_group_sk')
+                field: encounter_group_sk

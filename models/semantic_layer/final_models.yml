@@ -1,0 +1,250 @@
+version: 2
+
+models:
+  - name: semantic_layer__dim_data_source
+    description: One row per data source represented in Core claims or eligibility.
+    config:
+      alias: dim_data_source
+    columns:
+      - name: data_source_sk
+        description: Deterministic surrogate key for the data source.
+        data_tests: [not_null, unique]
+      - name: data_source
+        description: User-defined source-system identifier.
+        data_tests: [not_null, unique]
+
+  - name: semantic_layer__dim_date
+    description: Calendar dates spanning the minimum through maximum medical-claim start date.
+    config:
+      alias: dim_date
+    columns:
+      - name: full_date
+        description: Calendar date.
+        data_tests: [not_null, unique]
+
+  - name: semantic_layer__dim_encounter_group
+    description: Stable semantic keys for Tuva encounter groups.
+    config:
+      alias: dim_encounter_group
+    columns:
+      - name: encounter_group_sk
+        description: Immutable semantic key for the encounter group.
+        data_tests: [not_null, unique]
+      - name: encounter_group
+        description: Tuva encounter-group label.
+        data_tests: [not_null, unique]
+
+  - name: semantic_layer__dim_encounter_provider
+    description: Highest-paid rendering provider for each source-scoped encounter, with deterministic tie breaking.
+    config:
+      alias: dim_encounter_provider
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [encounter_id, data_source]
+    columns:
+      - name: encounter_id
+        description: Core encounter identifier.
+        data_tests: [not_null]
+      - name: data_source
+        description: Source-system identifier for the encounter.
+        data_tests: [not_null]
+
+  - name: semantic_layer__dim_encounter_type
+    description: Stable semantic keys and group mappings for Tuva encounter types.
+    config:
+      alias: dim_encounter_type
+    columns:
+      - name: encounter_type_sk
+        description: Immutable semantic key for the encounter type.
+        data_tests: [not_null, unique]
+      - name: encounter_type
+        description: Tuva encounter-type label.
+        data_tests: [not_null, unique]
+      - name: encounter_group_sk
+        description: Parent encounter-group key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('semantic_layer__dim_encounter_group')
+                field: encounter_group_sk
+
+  - name: semantic_layer__dim_member
+    description: Current member attributes at person and data-source grain.
+    config:
+      alias: dim_member
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, data_source]
+    columns:
+      - name: person_sk
+        description: Compatibility key formed from person ID and data source.
+        data_tests: [not_null, unique]
+
+  - name: semantic_layer__dim_member_months
+    description: Member and attribution attributes at Core's full member-month coverage grain.
+    config:
+      alias: dim_member_months
+    columns:
+      - name: member_month_id
+        description: Authoritative Core member-month identifier.
+        data_tests: [not_null, unique]
+      - name: member_month_sk
+        description: Deprecated compatibility key formed only from person ID and year-month; it is not guaranteed unique.
+
+  - name: semantic_layer__dim_service_category
+    description: One row per Tuva service-category hierarchy combination.
+    config:
+      alias: dim_service_category
+    columns:
+      - name: service_category_sk
+        description: Deterministic key for the three-level service-category combination.
+        data_tests: [not_null, unique]
+
+  - name: semantic_layer__fact_admissions
+    description: Claim-derived inpatient admission, readmission, and AHRQ PQI classifications at encounter and PQI grain.
+    config:
+      alias: fact_admissions
+    columns:
+      - name: encounter_id
+        description: Core encounter identifier.
+        data_tests: [not_null]
+      - name: data_source
+        description: Source-system identifier for the encounter.
+        data_tests: [not_null]
+
+  - name: semantic_layer__fact_claims
+    description: Enrolled medical claim lines enriched with encounter, provider, service-category, and CCSR attributes.
+    config:
+      alias: fact_claims
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [medical_claim_id, data_source]
+    columns:
+      - name: medical_claim_id
+        description: Core medical-claim line identifier.
+        data_tests: [not_null]
+      - name: member_month_id
+        description: Authoritative Core member-month identifier when enrollment is available.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('semantic_layer__dim_member_months')
+                field: member_month_id
+      - name: service_category_sk
+        description: Service-category dimension key.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('semantic_layer__dim_service_category')
+                field: service_category_sk
+
+  - name: semantic_layer__fact_ed_visits
+    description: Claim-derived emergency-department encounters enriched with NYU ED classification.
+    config:
+      alias: fact_ed_visits
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [encounter_id, data_source]
+
+  - name: semantic_layer__fact_encounter_service_bridge
+    description: Distinct source-scoped encounter to service-category relationships.
+    config:
+      alias: fact_encounter_service_bridge
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [encounter_id, data_source, service_category_sk]
+
+  - name: semantic_layer__fact_encounters
+    description: Claim-derived Core encounters enriched with stable semantic encounter keys.
+    config:
+      alias: fact_encounters
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [encounter_id, data_source]
+    columns:
+      - name: encounter_group_sk
+        description: Encounter-group dimension key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('semantic_layer__dim_encounter_group')
+                field: encounter_group_sk
+      - name: encounter_type_sk
+        description: Encounter-type dimension key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('semantic_layer__dim_encounter_type')
+                field: encounter_type_sk
+
+  - name: semantic_layer__fact_hcc_gaps
+    description: HCC suspecting gaps at person, payer, model-version, and HCC grain.
+    config:
+      alias: fact_hcc_gaps
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, payer, model_version, hcc_code]
+
+  - name: semantic_layer__fact_member_months
+    description: Cost and monthly CMS-HCC risk attributes at Core's full member-month coverage grain.
+    config:
+      alias: fact_member_months
+    columns:
+      - name: member_month_id
+        description: Authoritative Core member-month identifier.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('semantic_layer__dim_member_months')
+                field: member_month_id
+      - name: member_month_sk
+        description: Deprecated compatibility key formed only from person ID and year-month; it is not guaranteed unique.
+
+  - name: semantic_layer__fact_pharmacy_claims
+    description: Core pharmacy claim lines enriched with drug terminology and prescribing-provider specialty.
+    config:
+      alias: fact_pharmacy_claims
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [pharmacy_claim_id, data_source]
+    columns:
+      - name: pharmacy_claim_id
+        description: Core pharmacy-claim line identifier.
+        data_tests: [not_null]
+      - name: member_month_id
+        description: Authoritative Core member-month identifier when enrollment is available.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('semantic_layer__dim_member_months')
+                field: member_month_id
+
+  - name: semantic_layer__fact_quality_measures
+    description: Person-level quality-measure results by performance period.
+    config:
+      alias: fact_quality_measures
+
+  - name: semantic_layer__fact_risk_factors
+    description: CMS-HCC risk factors and coefficients by person, payer, model, and payment year.
+    config:
+      alias: fact_risk_factors
+
+  - name: semantic_layer__fact_risk_scores
+    description: CMS-HCC risk scores by person, payer, and payment year.
+    config:
+      alias: fact_risk_scores
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, payer, payment_year]
