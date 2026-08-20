@@ -41,7 +41,7 @@ latest 1.0.0 changes.
 | --- | --- | --- |
 | `the_tuva_project` (Tuva Core) | 1.0.0 | `f90d5fb3c34db92985fa3bc04ef9e44073c634b4` |
 | `ahrq_quality_indicators` | 1.0.0 | `77596dee5b32dd94806c55c2c0218a2c3149f05c` |
-| `ccsr` | 1.0.1 | `8c3e62bd072a03e786db3c3a217b71281f433a3a` |
+| `ccsr` | 1.0.0 | `b7d615f8eb008a4f9086bef726097c75f1433da3` |
 | `cms_hcc` | 1.0.0 | `bafb601e12b79a394c368c18fa948ec7dc62023a` |
 | `nyu_ed_classification` | 1.0.0 | `ad21be1cd30bb0cdfa92ea765017b07ab37ff856` |
 | `quality_measures` | 1.0.0 | `b2cfd190b8da9e7f37288f42b4414f1343343389` |

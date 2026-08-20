@@ -4,7 +4,7 @@ packages:
   - git: "https://github.com/tuva-health/ahrq_quality_indicators.git"
     revision: 77596dee5b32dd94806c55c2c0218a2c3149f05c
   - git: "https://github.com/tuva-health/ccsr.git"
-    revision: 8c3e62bd072a03e786db3c3a217b71281f433a3a
+    revision: b7d615f8eb008a4f9086bef726097c75f1433da3
   - git: "https://github.com/tuva-health/cms_hcc.git"
     revision: bafb601e12b79a394c368c18fa948ec7dc62023a
   - git: "https://github.com/tuva-health/nyu_ed_classification.git"
