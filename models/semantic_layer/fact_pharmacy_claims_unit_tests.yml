@@ -1,0 +1,113 @@
+version: 2
+
+unit_tests:
+  - name: test_fact_pharmacy_claims_uses_canonical_coderx_routers
+    description: |-
+      Verifies NDC11 enrichment, brand/generic derivation, ATC names, and the
+      intentionally null ingredient compatibility column.
+    model: semantic_layer__fact_pharmacy_claims
+    given:
+      - input: ref('semantic_layer__stg_core__pharmacy_claim')
+        format: sql
+        rows: |
+          {% set plan_identifier = '[plan]' if target.type in ['fabric', 'sqlserver'] else '`plan`' if target.type == 'bigquery' else 'plan' %}
+          {% set timestamp_type = 'datetime2(0)' if target.type in ['fabric', 'sqlserver'] else 'timestamp' %}
+          select
+              'brand-claim' as pharmacy_claim_id
+            , 'claim-1' as claim_id
+            , 1 as claim_line_number
+            , 'person-1' as person_id
+            , 'member-1' as member_id
+            , 'payer-1' as payer
+            , 'plan-1' as {{ plan_identifier }}
+            , 'member-month-1' as member_month_id
+            , 'source-1' as data_source
+            , '00093500456' as ndc_code
+            , 120 as paid_amount
+            , 140 as allowed_amount
+            , 'practitioner-1' as prescribing_provider_id
+            , 'Prescriber One' as prescribing_provider_name
+            , 'pharmacy-1' as dispensing_provider_id
+            , 'Pharmacy One' as dispensing_provider_name
+            , cast('2026-01-05' as date) as paid_date
+            , cast('2026-01-03' as date) as dispensing_date
+            , 30 as days_supply
+            , cast('2026-01-06 00:00:00' as {{ timestamp_type }}) as tuva_last_run
+          union all
+          select
+              'generic-claim', 'claim-2', 2, 'person-2', 'member-2', 'payer-2'
+            , 'plan-2', 'member-month-2', 'source-2', '63629224101'
+            , 20, 25
+            , 'practitioner-2', 'Prescriber Two', 'pharmacy-2', 'Pharmacy Two'
+            , cast('2026-02-05' as date), cast('2026-02-03' as date), 10
+            , cast('2026-02-06 00:00:00' as {{ timestamp_type }})
+      - input: ref('the_tuva_project', 'core__stg_coderx_packages')
+        format: sql
+        rows: |
+          select
+              '00093500456' as ndc11
+            , 'brand-rxcui' as drug_id
+            , 'Brand package drug' as drug_name
+            , 'true' as is_brand
+          union all
+          select '63629224101', 'generic-rxcui', 'Generic package drug', 'false'
+      - input: ref('the_tuva_project', 'core__stg_coderx_drugs')
+        format: sql
+        rows: |
+          select
+              'brand-rxcui' as drug_id
+            , 'Brand normalized drug' as drug_name
+            , 'true' as is_brand
+          union all
+          select 'generic-rxcui', 'Generic normalized drug', 'false'
+      - input: ref('the_tuva_project', 'core__stg_coderx_classes')
+        format: sql
+        rows: |
+          select
+              'brand-rxcui' as drug_id
+            , 'Alimentary tract and metabolism' as atc_1_name
+            , 'Drugs used in diabetes' as atc_2_name
+            , 'Blood glucose lowering drugs' as atc_3_name
+            , 'Biguanides' as atc_4_name
+          union all
+          select
+              'generic-rxcui'
+            , 'Nervous system'
+            , 'Analgesics'
+            , 'Opioids'
+            , 'Natural opium alkaloids'
+      - input: ref('semantic_layer__stg_core__practitioner')
+        format: sql
+        rows: |
+          select
+              'practitioner-1' as practitioner_id
+            , 'source-1' as data_source
+            , 'Endocrinology' as specialty
+          union all
+          select 'practitioner-2', 'source-2', 'Pain medicine'
+    expect:
+      rows:
+        - pharmacy_claim_id: brand-claim
+          ndc_description: Brand package drug
+          rxcui: brand-rxcui
+          rxnorm_description: Brand normalized drug
+          brand_name: Brand normalized drug
+          brand_vs_generic: brand
+          ingredient_name: null
+          atc_1_name: Alimentary tract and metabolism
+          atc_2_name: Drugs used in diabetes
+          atc_3_name: Blood glucose lowering drugs
+          atc_4_name: Biguanides
+          prescribing_specialty: Endocrinology
+        - pharmacy_claim_id: generic-claim
+          ndc_description: Generic package drug
+          rxcui: generic-rxcui
+          rxnorm_description: Generic normalized drug
+          brand_name: null
+          brand_vs_generic: generic
+          ingredient_name: null
+          atc_1_name: Nervous system
+          atc_2_name: Analgesics
+          atc_3_name: Opioids
+          atc_4_name: Natural opium alkaloids
+          prescribing_specialty: Pain medicine

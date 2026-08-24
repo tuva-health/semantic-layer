@@ -211,7 +211,17 @@ models:
         description: Deprecated compatibility key formed only from person ID and year-month; it is not guaranteed unique.
 
   - name: semantic_layer__fact_pharmacy_claims
-    description: Core pharmacy claim lines enriched with drug terminology and prescribing-provider specialty.
+    description: |-
+      Core pharmacy claim lines enriched with prescribing-provider specialty and
+      CodeRx medication terminology. The model reads Tuva Core's canonical CodeRx
+      package, drug, and class routers, so `use_proprietary_coderx` controls whether
+      enrichment comes from the bundled CodeRx Open assets or user-managed CodeRx
+      relations. The routers preserve one row per NDC11 and one selected ATC class
+      per RxNorm drug concept, protecting the pharmacy-claim grain.
+
+      CodeRx Open does not provide ingredient semantics. `ingredient_name` remains
+      in the output contract as a typed null rather than inferring an ingredient
+      from a drug or clinical-drug name.
     config:
       alias: fact_pharmacy_claims
     data_tests:
@@ -229,6 +239,32 @@ models:
               arguments:
                 to: ref('semantic_layer__dim_member_months')
                 field: member_month_id
+      - name: ndc_description
+        description: CodeRx package drug name associated with ndc_code.
+      - name: rxcui
+        description: RxNorm drug concept identifier associated with the matched CodeRx package.
+      - name: rxnorm_description
+        description: CodeRx drug name associated with rxcui.
+      - name: brand_name
+        description: CodeRx drug name when the matched drug is branded; otherwise null.
+      - name: brand_vs_generic
+        description: Brand or generic classification derived from the CodeRx is_brand flag.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [brand, generic]
+      - name: ingredient_name
+        description: |-
+          Reserved compatibility column. Always null because the canonical CodeRx
+          Open contract does not provide ingredient semantics.
+      - name: atc_1_name
+        description: ATC level 1 anatomical main-group name from the selected CodeRx class.
+      - name: atc_2_name
+        description: ATC level 2 therapeutic-subgroup name from the selected CodeRx class.
+      - name: atc_3_name
+        description: ATC level 3 therapeutic or pharmacological subgroup name from the selected CodeRx class.
+      - name: atc_4_name
+        description: ATC level 4 chemical, therapeutic, or pharmacological subgroup name from the selected CodeRx class.
 
   - name: semantic_layer__fact_quality_measures
     description: Person-level quality-measure results by performance period.
