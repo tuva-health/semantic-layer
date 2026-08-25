@@ -30,6 +30,11 @@ vars:
   custom_bucket_name: tuva-public-resources  # Default public bucket for package data assets.
   tuva_seed_buckets: {}                # Optional per-family bucket overrides, keyed by seed family.
 
+  ## CodeRx terminology
+  # Uses Tuva Core's bundled CodeRx Open routers. When true, Core instead expects
+  # user-managed packages, drugs, and classes relations in the coderx schema.
+  use_coderx_enterprise: false
+
   ## Standalone package behavior
   # Importing a standalone package enables it. These vars change package behavior;
   # none is a package-level on/off switch or an external-asset version pin.

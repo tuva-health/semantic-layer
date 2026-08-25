@@ -1,6 +1,6 @@
 packages:
   - git: "https://github.com/tuva-health/tuva-core.git"
-    revision: 32b7c7f32e2ae9537ab78f9c4b1d949fd5cbb4d8
+    revision: 6afbdccf109e0607ddbef7a4f9576f4bba97546c
   - git: "https://github.com/tuva-health/ahrq_quality_indicators.git"
     revision: 77596dee5b32dd94806c55c2c0218a2c3149f05c
   - git: "https://github.com/tuva-health/ccsr.git"
