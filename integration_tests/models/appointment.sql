@@ -14,10 +14,8 @@ select
     , duration
     , location_id
     , practitioner_id
-    , type_code
-    , type_description
-    , status_code
-    , status_description
+    , coalesce(type_description, type_code) as type
+    , coalesce(status_description, status_code) as status
     , reason
     , cancellation_reason
     , cast(null as {{ dbt.type_timestamp() }}) as ingest_datetime
