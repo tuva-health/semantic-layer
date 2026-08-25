@@ -214,7 +214,7 @@ models:
     description: |-
       Core pharmacy claim lines enriched with prescribing-provider specialty and
       CodeRx medication terminology. The model reads Tuva Core's canonical CodeRx
-      package, drug, and class routers, so `use_proprietary_coderx` controls whether
+      package, drug, and class routers, so `use_coderx_enterprise` controls whether
       enrichment comes from the bundled CodeRx Open assets or user-managed CodeRx
       relations. The routers preserve one row per NDC11 and one selected ATC class
       per RxNorm drug concept, protecting the pharmacy-claim grain.

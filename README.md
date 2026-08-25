@@ -93,6 +93,21 @@ vars:
   semantic_layer_specialty_tier_threshold: 950
 ```
 
+`fact_pharmacy_claims` consumes Tuva Core's canonical CodeRx package, drug,
+and class routers. Those routers use the bundled CodeRx Open assets by default.
+To use user-managed CodeRx Enterprise `packages`, `drugs`, and `classes`
+relations in the target database's `coderx` schema instead, configure the
+shared Tuva Core variable:
+
+```yaml
+vars:
+  use_coderx_enterprise: true
+```
+
+The Semantic Layer does not read either CodeRx asset family directly, so this
+switch applies consistently to Core pharmacy normalization, logical data
+quality, medication enrichment, and `fact_pharmacy_claims`.
+
 ## Known source-scoping limitations
 
 These outputs preserve the current upstream contracts and therefore cannot yet
