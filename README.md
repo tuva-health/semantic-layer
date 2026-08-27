@@ -39,7 +39,7 @@ latest 1.0.0 changes.
 
 | dbt package | Version | Tested revision |
 | --- | --- | --- |
-| `the_tuva_project` (Tuva Core) | 1.0.0 | `9cb91c9cb7e2bfcff48c75c0b95c095321e21820` |
+| `the_tuva_project` (Tuva Core) | 1.0.0 | `df92cf3b2cc8321d052eac9d9e98b214a232c7ed` |
 | `ahrq_quality_indicators` | 1.0.0 | `77596dee5b32dd94806c55c2c0218a2c3149f05c` |
 | `ccsr` | 1.0.0 | `60e3061b6854035f0989a8c1f23b04d2d4a7605a` |
 | `cms_hcc` | 1.0.0 | `bafb601e12b79a394c368c18fa948ec7dc62023a` |
