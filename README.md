@@ -39,7 +39,7 @@ latest 1.0.0 changes.
 
 | dbt package | Version | Tested revision |
 | --- | --- | --- |
-| `the_tuva_project` (Tuva Core) | 1.0.0 | `f90d5fb3c34db92985fa3bc04ef9e44073c634b4` |
+| `the_tuva_project` (Tuva Core) | 1.0.0 | `9cb91c9cb7e2bfcff48c75c0b95c095321e21820` |
 | `ahrq_quality_indicators` | 1.0.0 | `77596dee5b32dd94806c55c2c0218a2c3149f05c` |
 | `ccsr` | 1.0.0 | `60e3061b6854035f0989a8c1f23b04d2d4a7605a` |
 | `cms_hcc` | 1.0.0 | `bafb601e12b79a394c368c18fa948ec7dc62023a` |
@@ -92,6 +92,21 @@ equivalent paid amount with this variable (default `$950`):
 vars:
   semantic_layer_specialty_tier_threshold: 950
 ```
+
+`fact_pharmacy_claims` consumes Tuva Core's canonical CodeRx package, drug,
+and class routers. Those routers use the bundled CodeRx Open assets by default.
+To use user-managed CodeRx Enterprise `packages`, `drugs`, and `classes`
+relations in the target database's `coderx` schema instead, configure the
+shared Tuva Core variable:
+
+```yaml
+vars:
+  use_coderx_enterprise: true
+```
+
+The Semantic Layer does not read either CodeRx asset family directly, so this
+switch applies consistently to Core pharmacy normalization, logical data
+quality, medication enrichment, and `fact_pharmacy_claims`.
 
 ## Known source-scoping limitations
 
