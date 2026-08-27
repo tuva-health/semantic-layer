@@ -50,7 +50,7 @@
     , group_name
 {%- endset -%}
 
-{# Extension columns for testing passthrough to core.member_month #}
+{# Extension columns for testing passthrough to core.eligibility #}
 {%- set tuva_extensions -%}
     , {{ dbt.concat([
         "'claims_'",
