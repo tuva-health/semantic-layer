@@ -1,0 +1,40 @@
+name: Package Contract
+
+on:
+  pull_request:
+    paths:
+      - 'dbt_project.yml'
+      - 'packages.yml'
+      - 'README.md'
+      - 'data_assets.yml'
+      - 'integration_tests/packages.yml'
+      - 'macros/get_semantic_layer_package_version.sql'
+      - 'macros/load_semantic_layer_seed.sql'
+      - 'scripts/test_package_contract.py'
+      - '.github/workflows/package-contract.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'dbt_project.yml'
+      - 'packages.yml'
+      - 'README.md'
+      - 'data_assets.yml'
+      - 'integration_tests/packages.yml'
+      - 'macros/get_semantic_layer_package_version.sql'
+      - 'macros/load_semantic_layer_seed.sql'
+      - 'scripts/test_package_contract.py'
+      - '.github/workflows/package-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Verify package contract
+        run: python3 scripts/test_package_contract.py

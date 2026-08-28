@@ -39,17 +39,19 @@ latest 1.0.0 changes.
 
 | dbt package | Version | Tested revision |
 | --- | --- | --- |
-| `the_tuva_project` (Tuva Core) | 1.0.0 | `df92cf3b2cc8321d052eac9d9e98b214a232c7ed` |
-| `ahrq_quality_indicators` | 1.0.0 | `77596dee5b32dd94806c55c2c0218a2c3149f05c` |
-| `ccsr` | 1.0.0 | `60e3061b6854035f0989a8c1f23b04d2d4a7605a` |
-| `cms_hcc` | 1.0.0 | `bafb601e12b79a394c368c18fa948ec7dc62023a` |
-| `nyu_ed_classification` | 1.0.0 | `ad21be1cd30bb0cdfa92ea765017b07ab37ff856` |
-| `quality_measures` | 1.0.0 | `b2cfd190b8da9e7f37288f42b4414f1343343389` |
-| `dbt_utils` | 1.0.0 | dbt Hub release |
+| `the_tuva_project` (Tuva Core) | 1.0.0 | `3d22d5e41082197f396ab8d86c31f9745bb7c16b` |
+| `ahrq_quality_indicators` | 1.0.0 | `42a6b42666cb47877b0d96e4d0ee90e44fb0e971` |
+| `ccsr` | 1.0.0 | `813acf1eb567dba0429e3664796ea6006f216bfd` |
+| `cms_hcc` | 1.0.0 | `4f2454fd73b8d0e63ad0a61fa6309ef200d99caf` |
+| `nyu_ed_classification` | 1.0.0 | `c3ac03dbfb214264ecefdbfca04e18cef2a77013` |
+| `quality_measures` | 1.0.0 | `db8168b28226a1b605f294bc7cc15c88abe8032a` |
+| `dbt_utils` | 1.2.1 | dbt Hub release |
 
 The exact Git pins used by the harness are in
 `integration_tests/packages.yml`. Production projects should use a documented
-compatible release set when these packages are released.
+compatible release set when these packages are released. Because these six
+packages share the package-seed loader contract, refresh their pins together
+whenever that contract changes.
 
 ## Migration from the v0.18.0 mart
 
