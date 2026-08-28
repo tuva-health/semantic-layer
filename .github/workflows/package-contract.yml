@@ -12,6 +12,8 @@ on:
       - 'macros/load_semantic_layer_seed.sql'
       - 'scripts/test_package_contract.py'
       - '.github/workflows/package-contract.yml'
+      - '.github/workflows/create-release.yml'
+      - '.github/scripts/verify-data-asset-receipts.py'
   push:
     branches:
       - main
@@ -25,6 +27,8 @@ on:
       - 'macros/load_semantic_layer_seed.sql'
       - 'scripts/test_package_contract.py'
       - '.github/workflows/package-contract.yml'
+      - '.github/workflows/create-release.yml'
+      - '.github/scripts/verify-data-asset-receipts.py'
   workflow_dispatch:
 
 permissions:
