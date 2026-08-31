@@ -155,15 +155,17 @@ scripts/dbt-local build --full-refresh --indirect-selection cautious \
 
 ## Package-owned seed assets
 
-The root `data_assets.yml` declares the package-owned encounter-key assets,
-which publish as flat gzip objects under `semantic-layer/<package-version>/`:
+The package-owned encounter-key assets load as flat gzip objects from
+`data-marts/semantic-layer/<asset-version>/`:
 
 - `semantic_layer__encounter_group_sk.csv.gz`
 - `semantic_layer__encounter_type_sk.csv.gz`, including the long-term acute care
   row with key `32`
 
-The complete reviewed source CSVs live under `data_assets/sources/1.0.0/`; the
-CSV files under `seeds/` remain header-only dbt loader contracts. Each package
-version maps directly to its public data-asset folder. Before tagging a package
-release, automation checks that every path in `data_assets.yml` exists in S3,
-GCS, and Azure.
+The CSV files under `seeds/` are header-only dbt loader contracts, and the seed
+YAML defines the relations, types, and tests.
+`semantic_layer_data_asset_version` selects the folder and defaults to `1.0.0`.
+The data-asset version is intentionally independent of this package's code
+version, and maintainers coordinate the two values when an asset changes.
+Cloud `_manifest.json` and `_release.json` files are maintenance metadata and
+are not read by dbt at runtime.
