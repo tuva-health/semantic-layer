@@ -92,6 +92,68 @@ class PackageContractTest(unittest.TestCase):
         for package_name, project_name in package_to_project.items():
             self.assertEqual(package_pins[package_name], readme_pins[project_name])
 
+    def test_release_workflow_runs_package_contract(self):
+        workflow_text = (
+            ROOT / ".github" / "workflows" / "create-release.yml"
+        ).read_text()
+        checkout_position = workflow_text.index("uses: actions/checkout@")
+        contract_position = workflow_text.index(
+            "run: python3 scripts/test_package_contract.py"
+        )
+        version_check_position = workflow_text.index("- name: Check version change")
+
+        self.assertLess(checkout_position, contract_position)
+        self.assertLess(contract_position, version_check_position)
+
+    def test_release_workflow_finds_exactly_one_package_version(self):
+        workflow_text = (
+            ROOT / ".github" / "workflows" / "create-release.yml"
+        ).read_text()
+        project_text = (ROOT / "dbt_project.yml").read_text()
+
+        pattern_source = re.search(
+            r'VERSION_LINE_PATTERN = re\.compile\(\s*'
+            r'r"((?:[^"\\]|\\.)*)",\s*re\.MULTILINE,\s*\)',
+            workflow_text,
+        )
+        self.assertIsNotNone(pattern_source)
+
+        version_line_pattern = re.compile(pattern_source.group(1), re.MULTILINE)
+        matches = version_line_pattern.findall(project_text)
+        project_version = re.search(r"(?m)^version: '([^']+)'$", project_text)
+
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0][1], project_version.group(1))
+
+    def test_release_workflow_checks_declared_files_before_tagging(self):
+        workflow_text = (
+            ROOT / ".github" / "workflows" / "create-release.yml"
+        ).read_text()
+
+        self.assertIn("PACKAGE_SLUG: semantic-layer", workflow_text)
+        asset_check_position = workflow_text.index(
+            "- name: Verify data asset files exist"
+        )
+        tag_position = workflow_text.index("- name: Create tag")
+        self.assertLess(asset_check_position, tag_position)
+        self.assertIn("data_assets.yml", workflow_text)
+        self.assertIn(
+            'url="${public_root}/${PACKAGE_SLUG}/${PACKAGE_VERSION}/${asset_path}"',
+            workflow_text,
+        )
+        self.assertIn("--head", workflow_text)
+        for host in (
+            "https://tuva-public-resources.s3.amazonaws.com",
+            "https://storage.googleapis.com/tuva-public-resources",
+            "https://tuvapublicresources.blob.core.windows.net/tuva-public-resources",
+        ):
+            self.assertIn(host, workflow_text)
+
+        action_refs = re.findall(r"uses:\s+[^@\s]+@([^\s]+)", workflow_text)
+        self.assertTrue(action_refs)
+        for action_ref in action_refs:
+            self.assertRegex(action_ref, r"^[0-9a-f]{40}$")
+
 
 if __name__ == "__main__":
     unittest.main()

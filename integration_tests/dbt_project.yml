@@ -36,7 +36,7 @@ vars:
 
   ## Standalone package behavior
   # Importing a standalone package enables it. These vars change package behavior;
-  # none is a package-level on/off switch or an external-asset version pin.
+  # none is a package-level on/off switch. Each package reads assets from its own version folder.
   ccsr:
     wide_condition_enabled: false      # The semantic layer needs only the long diagnosis mapping.
     wide_procedure_enabled: false      # The semantic layer does not consume procedure CCSR outputs.

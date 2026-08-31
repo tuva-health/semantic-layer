@@ -163,7 +163,7 @@ which publish as flat gzip objects under `semantic-layer/<package-version>/`:
   row with key `32`
 
 The complete reviewed source CSVs live under `data_assets/sources/1.0.0/`; the
-CSV files under `seeds/` remain header-only dbt loader contracts. For the 1.0.0
-asset release, Tuva Maintenance pins the raw source URLs to the exact reviewed
-package commit, canonicalizes the gzip bytes, publishes S3 first, and verifies
-the GCS and Azure mirrors before the package release is tagged.
+CSV files under `seeds/` remain header-only dbt loader contracts. Each package
+version maps directly to its public data-asset folder. Before tagging a package
+release, automation checks that every path in `data_assets.yml` exists in S3,
+GCS, and Azure.
