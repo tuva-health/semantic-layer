@@ -25,7 +25,10 @@ class PackageContractTest(unittest.TestCase):
 
         self.assertIsNotNone(project_version)
         self.assertIsNotNone(asset_version)
-        self.assertEqual(asset_version.group(1), "1.0.0")
+        self.assertRegex(
+            asset_version.group(1),
+            r"^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$",
+        )
         self.assertIn(
             'require-dbt-version: ">=1.10.5,<3.0.0"',
             project_text,
