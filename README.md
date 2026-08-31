@@ -39,7 +39,7 @@ latest 1.0.0 changes.
 
 | dbt package | Version | Tested revision |
 | --- | --- | --- |
-| `the_tuva_project` (Tuva Core) | 1.0.0 | `3d22d5e41082197f396ab8d86c31f9745bb7c16b` |
+| `the_tuva_project` (Tuva Core) | 1.0.0 | `d7f1ed0227003cba85914aadf8c2164320e52c77` |
 | `ahrq_quality_indicators` | 1.0.0 | `42a6b42666cb47877b0d96e4d0ee90e44fb0e971` |
 | `ccsr` | 1.0.0 | `813acf1eb567dba0429e3664796ea6006f216bfd` |
 | `cms_hcc` | 1.0.0 | `4f2454fd73b8d0e63ad0a61fa6309ef200d99caf` |
@@ -155,15 +155,17 @@ scripts/dbt-local build --full-refresh --indirect-selection cautious \
 
 ## Package-owned seed assets
 
-The root `data_assets.yml` declares the package-owned encounter-key assets,
-which publish as flat gzip objects under `semantic-layer/<package-version>/`:
+The package-owned encounter-key assets load as flat gzip objects from
+`data-marts/semantic-layer/<asset-version>/`:
 
 - `semantic_layer__encounter_group_sk.csv.gz`
 - `semantic_layer__encounter_type_sk.csv.gz`, including the long-term acute care
   row with key `32`
 
-The complete reviewed source CSVs live under `data_assets/sources/1.0.0/`; the
-CSV files under `seeds/` remain header-only dbt loader contracts. For the 1.0.0
-asset release, Tuva Maintenance pins the raw source URLs to the exact reviewed
-package commit, canonicalizes the gzip bytes, publishes S3 first, and verifies
-the GCS and Azure mirrors before the package release is tagged.
+The CSV files under `seeds/` are header-only dbt loader contracts, and the seed
+YAML defines the relations, types, and tests.
+`semantic_layer_data_asset_version` selects the folder and defaults to `1.0.0`.
+The data-asset version is intentionally independent of this package's code
+version, and maintainers coordinate the two values when an asset changes.
+Cloud `_manifest.json` and `_release.json` files are maintenance metadata and
+are not read by dbt at runtime.

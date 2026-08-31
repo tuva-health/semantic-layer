@@ -18,6 +18,7 @@ clean-targets:
 
 vars:
   tuva_last_run: '{{ run_started_at.astimezone(modules.pytz.timezone("UTC")) }}'
+  semantic_layer_data_asset_version: '1.0.0'
   semantic_layer_specialty_tier_threshold: 950
 
 seeds:

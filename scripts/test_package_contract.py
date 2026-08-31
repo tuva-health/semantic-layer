@@ -9,12 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PackageContractTest(unittest.TestCase):
-    def test_package_version_and_asset_identity_are_aligned(self):
+    def test_package_and_asset_versions_are_independent(self):
         project_text = (ROOT / "dbt_project.yml").read_text()
-        version_macro = (
-            ROOT / "macros" / "get_semantic_layer_package_version.sql"
-        ).read_text()
-        data_assets = (ROOT / "data_assets.yml").read_text()
         seed_loader = (ROOT / "macros" / "load_semantic_layer_seed.sql").read_text()
 
         project_version = re.search(
@@ -22,15 +18,17 @@ class PackageContractTest(unittest.TestCase):
             r"(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)'$",
             project_text,
         )
-        macro_version = re.search(
-            r"return\('([1-9][0-9]*\.[0-9]+\.[0-9]+"
-            r"(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)'\)",
-            version_macro,
+        asset_version = re.search(
+            r"(?m)^  semantic_layer_data_asset_version: '([^']+)'$",
+            project_text,
         )
 
         self.assertIsNotNone(project_version)
-        self.assertIsNotNone(macro_version)
-        self.assertEqual(project_version.group(1), macro_version.group(1))
+        self.assertIsNotNone(asset_version)
+        self.assertRegex(
+            asset_version.group(1),
+            r"^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$",
+        )
         self.assertIn(
             'require-dbt-version: ">=1.10.5,<3.0.0"',
             project_text,
@@ -43,17 +41,22 @@ class PackageContractTest(unittest.TestCase):
             "| `dbt_utils` | 1.2.1 | dbt Hub release |",
             (ROOT / "README.md").read_text(),
         )
-        self.assertRegex(data_assets, r"(?m)^package: semantic-layer$")
-        asset_paths = set(re.findall(r"(?m)^\s+path: (\S+)$", data_assets))
+
         configured_paths = set(
             re.findall(r"load_semantic_layer_seed\('([^']+)'\)", project_text)
         )
-        self.assertEqual(asset_paths, configured_paths)
-        self.assertIn(
-            "'semantic-layer',\n"
-            "      semantic_layer.get_semantic_layer_package_version(),",
-            seed_loader,
+        header_paths = {
+            f"{path.name}.gz" for path in (ROOT / "seeds").glob("*.csv")
+        }
+        self.assertEqual(configured_paths, header_paths)
+        self.assertIn("'data-marts/semantic-layer',", seed_loader)
+        self.assertIn("var('semantic_layer_data_asset_version'),", seed_loader)
+
+        self.assertFalse((ROOT / "data_assets.yml").exists())
+        self.assertFalse(
+            (ROOT / "macros" / "get_semantic_layer_package_version.sql").exists()
         )
+
         workflow = (
             ROOT / ".github" / "workflows" / "package-contract.yml"
         ).read_text()
@@ -62,6 +65,7 @@ class PackageContractTest(unittest.TestCase):
             workflow,
         )
         self.assertIn("- 'integration_tests/packages.yml'", workflow)
+        self.assertIn("- 'seeds/**'", workflow)
 
     def test_integration_pins_match_the_readme_compatibility_set(self):
         packages_text = (ROOT / "integration_tests" / "packages.yml").read_text()
@@ -91,6 +95,52 @@ class PackageContractTest(unittest.TestCase):
         self.assertEqual(set(package_pins), set(package_to_project))
         for package_name, project_name in package_to_project.items():
             self.assertEqual(package_pins[package_name], readme_pins[project_name])
+
+    def test_release_workflow_is_code_only(self):
+        workflow_text = (
+            ROOT / ".github" / "workflows" / "create-release.yml"
+        ).read_text()
+        checkout_position = workflow_text.index("uses: actions/checkout@")
+        contract_position = workflow_text.index(
+            "run: python3 scripts/test_package_contract.py"
+        )
+        version_check_position = workflow_text.index("- name: Check version change")
+
+        self.assertLess(checkout_position, contract_position)
+        self.assertLess(contract_position, version_check_position)
+        for forbidden in (
+            "data_assets.yml",
+            "PACKAGE_SLUG",
+            "tuva-public-resources",
+            "_release.json",
+            "package_commit",
+        ):
+            self.assertNotIn(forbidden, workflow_text)
+
+        action_refs = re.findall(r"uses:\s+[^@\s]+@([^\s]+)", workflow_text)
+        self.assertTrue(action_refs)
+        for action_ref in action_refs:
+            self.assertRegex(action_ref, r"^[0-9a-f]{40}$")
+
+    def test_release_workflow_finds_exactly_one_package_version(self):
+        workflow_text = (
+            ROOT / ".github" / "workflows" / "create-release.yml"
+        ).read_text()
+        project_text = (ROOT / "dbt_project.yml").read_text()
+
+        pattern_source = re.search(
+            r'VERSION_LINE_PATTERN = re\.compile\(\s*'
+            r'r"((?:[^"\\]|\\.)*)",\s*re\.MULTILINE,\s*\)',
+            workflow_text,
+        )
+        self.assertIsNotNone(pattern_source)
+
+        version_line_pattern = re.compile(pattern_source.group(1), re.MULTILINE)
+        matches = version_line_pattern.findall(project_text)
+        project_version = re.search(r"(?m)^version: '([^']+)'$", project_text)
+
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0][1], project_version.group(1))
 
 
 if __name__ == "__main__":
