@@ -1,5 +1,6 @@
 SELECT
     sl.person_id
+  , sl.data_source
   , sl.denominator_flag
   , sl.numerator_flag
   , sl.exclusion_flag

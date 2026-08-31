@@ -80,25 +80,6 @@ WITH monthly_patient_costs AS (
     FROM {{ ref('semantic_layer__stg_core__cost') }}
 ),
 
-monthly_patient_risk_cte AS (
-    SELECT
-        {{ the_tuva_project.year_month('collection_end_date') }} AS year_month
-      , person_id
-      , payer
-      , normalized_risk_score
-      , risk_model_code
-    FROM {{ ref('semantic_layer__stg_cms_hcc__patient_risk_scores_monthly') }}
-),
-
-monthly_population_risk_cte AS (
-    SELECT
-        {{ the_tuva_project.year_month('collection_end_date') }} AS year_month
-      , AVG(normalized_risk_score) AS monthly_avg_risk_score
-    FROM {{ ref('semantic_layer__stg_cms_hcc__patient_risk_scores_monthly') }}
-    GROUP BY
-        {{ the_tuva_project.year_month('collection_end_date') }}
-),
-
 combined_data_cte AS (
     SELECT
         mm.person_id
@@ -112,13 +93,9 @@ combined_data_cte AS (
       , mm.year_month
       , mm.year_nbr
       , 1 AS member_months_value
-      , mpr.risk_model_code
-      , mpr.normalized_risk_score
-      , CASE
-          WHEN pop_risk.monthly_avg_risk_score IS NOT NULL AND pop_risk.monthly_avg_risk_score != 0
-          THEN mpr.normalized_risk_score / pop_risk.monthly_avg_risk_score
-          ELSE NULL
-        END AS population_normalized_risk_score
+      , mmr.risk_model_code
+      , mmr.normalized_risk_score
+      , mmr.population_normalized_risk_score
       , pc.inpatient_paid
       , pc.outpatient_paid
       , pc.office_based_paid
@@ -191,19 +168,25 @@ combined_data_cte AS (
       , pc.medical_allowed
       , mm.tuva_last_run
     FROM {{ ref('semantic_layer__stg_core__member_month') }} mm
-    LEFT JOIN monthly_patient_risk_cte mpr
-        ON mm.person_id = mpr.person_id
-       AND mm.year_month = mpr.year_month
-       AND coalesce(mm.payer, 'NONE') = coalesce(mpr.payer, 'NONE')
-    LEFT JOIN monthly_population_risk_cte pop_risk
-        ON mm.year_month = pop_risk.year_month
+    LEFT JOIN {{ ref('semantic_layer__int_member_month_risk') }} as mmr
+        ON mm.member_month_id = mmr.member_month_id
+       AND mm.data_source = mmr.data_source
     LEFT JOIN monthly_patient_costs pc
         ON mm.person_id = pc.person_id
        AND mm.member_id = pc.member_id
        AND mm.year_month = pc.year_month
-       AND coalesce(mm.payer, 'NONE') = coalesce(pc.payer, 'NONE')
-       AND coalesce(mm.{{ the_tuva_project.quote_column('plan') }}, 'NONE') = coalesce(pc.{{ the_tuva_project.quote_column('plan') }}, 'NONE')
-       AND coalesce(mm.data_source, 'NONE') = coalesce(pc.data_source, 'NONE')
+       AND (
+            mm.payer = pc.payer
+            OR (mm.payer IS NULL AND pc.payer IS NULL)
+       )
+       AND (
+            mm.{{ the_tuva_project.quote_column('plan') }} = pc.{{ the_tuva_project.quote_column('plan') }}
+            OR (
+                mm.{{ the_tuva_project.quote_column('plan') }} IS NULL
+                AND pc.{{ the_tuva_project.quote_column('plan') }} IS NULL
+            )
+       )
+       AND mm.data_source = pc.data_source
 )
 
 SELECT
@@ -240,6 +223,7 @@ SELECT
   , cd.patient_source_key
   , cd.risk_model_code
   , cd.normalized_risk_score
+  , cd.population_normalized_risk_score
   , cd.inpatient_paid
   , cd.outpatient_paid
   , cd.office_based_paid

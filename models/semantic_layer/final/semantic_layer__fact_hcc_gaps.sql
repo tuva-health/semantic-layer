@@ -1,6 +1,7 @@
 SELECT
     lr.person_id
   , lr.payer
+  , lr.data_source
   , lr.model_version
   , lr.hcc_code
   , lr.hcc_description
