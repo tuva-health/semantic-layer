@@ -171,7 +171,7 @@ unit_tests:
             , 'source-a' as data_source
             , 'community' as risk_model_code
             , cast('2025-01-31' as date) as collection_end_date
-            , cast(1.0 as decimal(18, 6)) as normalized_risk_score
+            , cast(1.0 as numeric) as normalized_risk_score
           union all
           select
               'shared-person'
@@ -179,7 +179,7 @@ unit_tests:
             , 'source-b'
             , 'institutional'
             , cast('2025-01-31' as date)
-            , cast(4.0 as decimal(18, 6))
+            , cast(4.0 as numeric)
           union all
           select
               'other-person'
@@ -187,7 +187,7 @@ unit_tests:
             , 'source-a'
             , 'community'
             , cast('2025-01-31' as date)
-            , cast(3.0 as decimal(18, 6))
+            , cast(3.0 as numeric)
     expect:
       rows:
         - member_month_id: member-month-a
