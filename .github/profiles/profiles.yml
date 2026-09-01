@@ -1,0 +1,7 @@
+default:
+  target: ci
+  outputs:
+    ci:
+      type: duckdb
+      path: semantic_layer_ci.duckdb
+      threads: 1
