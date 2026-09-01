@@ -19,8 +19,6 @@ SELECT
   , r.readmission_specialty_cohort
   , r.readmission_died_flag
   , r.readmission_diagnosis_ccs
-  , ea.data_source
+  , r.data_source
   , cast('{{ var('tuva_last_run') }}' as {{ dbt.type_timestamp() }}) as tuva_last_run
 FROM {{ ref('quality_measures', 'readmissions__readmission_summary') }} as r
-LEFT JOIN {{ ref('quality_measures', 'readmissions__encounter_augmented') }} as ea
-    ON r.encounter_id = ea.encounter_id

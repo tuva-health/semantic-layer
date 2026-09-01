@@ -1,6 +1,7 @@
 SELECT
     rsm.person_id
   , rsm.payer
+  , rsm.data_source
   , rsm.risk_model_code
   , rsm.enrollment_status
   , rsm.payment_year

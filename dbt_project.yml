@@ -38,6 +38,9 @@ models:
       staging:
         +materialized: ephemeral
         +access: private
+      intermediate:
+        +materialized: ephemeral
+        +access: private
       final:
         +materialized: table
         +access: public

@@ -1,0 +1,247 @@
+version: 2
+
+unit_tests:
+  - name: test_quality_measure_fact_preserves_source_grain
+    description: >-
+      The same person and measure from separate source systems must remain two
+      independently attributable public fact rows.
+    model: semantic_layer__fact_quality_measures
+    given:
+      - input: ref('semantic_layer__stg_quality_measures__summary_long')
+        format: sql
+        rows: |
+          select
+              'shared-person' as person_id
+            , 'source-a' as data_source
+            , 1 as denominator_flag
+            , 1 as numerator_flag
+            , 0 as exclusion_flag
+            , 1 as performance_flag
+            , cast('2025-06-01' as date) as evidence_date
+            , 'evidence-a' as evidence_value
+            , cast(null as date) as exclusion_date
+            , null as exclusion_reason
+            , cast('2025-01-01' as date) as performance_period_begin
+            , cast('2025-12-31' as date) as performance_period_end
+            , 'measure-1' as measure_id
+            , 'Measure One' as measure_name
+            , '2025' as measure_version
+            , null as tuva_last_run
+          union all
+          select
+              'shared-person', 'source-b', 1, 0, 0, 0
+            , cast('2025-07-01' as date), 'evidence-b', cast(null as date), null
+            , cast('2025-01-01' as date), cast('2025-12-31' as date)
+            , 'measure-1', 'Measure One', '2025', null
+    expect:
+      rows:
+        - person_id: shared-person
+          data_source: source-a
+          measure_id: measure-1
+          performance_flag: 1
+        - person_id: shared-person
+          data_source: source-b
+          measure_id: measure-1
+          performance_flag: 0
+
+  - name: test_risk_score_fact_preserves_source_grain
+    description: >-
+      The same person, payer, and payment year from separate source systems
+      must remain two independently attributable public fact rows.
+    model: semantic_layer__fact_risk_scores
+    given:
+      - input: ref('semantic_layer__stg_cms_hcc__patient_risk_scores')
+        format: sql
+        rows: |
+          select
+              'shared-person' as person_id
+            , 'shared-payer' as payer
+            , 'source-a' as data_source
+            , 1.0 as v24_risk_score
+            , 2.0 as v28_risk_score
+            , 1.5 as blended_risk_score
+            , 1.4 as normalized_risk_score
+            , 1.3 as payment_risk_score
+            , 15.6 as payment_risk_score_weighted_by_months
+            , 12 as member_months
+            , 2025 as payment_year
+            , null as tuva_last_run
+          union all
+          select
+              'shared-person', 'shared-payer', 'source-b'
+            , 3.0, 4.0, 3.5, 3.4, 3.3, 39.6, 12, 2025, null
+    expect:
+      rows:
+        - person_id: shared-person
+          payer: shared-payer
+          data_source: source-a
+          payment_year: 2025
+          normalized_risk_score: 1.4
+        - person_id: shared-person
+          payer: shared-payer
+          data_source: source-b
+          payment_year: 2025
+          normalized_risk_score: 3.4
+
+  - name: test_encounter_enrichment_limits_ccsr_to_icd_10_cm
+    description: >-
+      A diagnosis code from another code system must not inherit a coincidental
+      ICD-10-CM CCSR match, while source-scoped encounter/provider joins remain
+      one-to-one.
+    model: semantic_layer__int_encounter_enrichment
+    given:
+      - input: ref('semantic_layer__fact_encounters')
+        format: sql
+        rows: |
+          select
+              'encounter-icd10' as encounter_id
+            , 'group-1' as encounter_group_sk
+            , 'type-1' as encounter_type_sk
+            , 'icd-10-cm' as primary_diagnosis_code_type
+            , 'A001' as primary_diagnosis_code
+            , 'ICD-10 diagnosis' as primary_diagnosis_description
+            , 'source-a' as data_source
+          union all
+          select
+              'encounter-icd9'
+            , 'group-1'
+            , 'type-1'
+            , 'icd-9-cm'
+            , 'A001'
+            , 'Different code system'
+            , 'source-b'
+      - input: ref('semantic_layer__dim_encounter_provider')
+        format: sql
+        rows: |
+          select
+              'encounter-icd10' as encounter_id
+            , 'source-a' as data_source
+            , 'provider-a' as primary_provider_id
+            , 'specialty-a' as specialty
+          union all
+          select 'encounter-icd9', 'source-b', 'provider-b', 'specialty-b'
+      - input: ref('ccsr', 'ccsr__dx_vertical_pivot')
+        format: sql
+        rows: |
+          select
+              'A001' as code
+            , 'INF' as ccsr_parent_category
+            , 'INF001' as ccsr_category
+            , 'Bacterial infection' as ccsr_category_description
+            , 1 as ccsr_category_rank
+    expect:
+      rows:
+        - encounter_id: encounter-icd10
+          data_source: source-a
+          primary_provider_id: provider-a
+          ccsr_category: INF001
+        - encounter_id: encounter-icd9
+          data_source: source-b
+          primary_provider_id: provider-b
+          ccsr_category: null
+
+  - name: test_member_month_risk_is_source_scoped
+    description: >-
+      Reused person and payer identifiers must receive only the HCC result and
+      population benchmark from their own data source.
+    model: semantic_layer__int_member_month_risk
+    given:
+      - input: ref('semantic_layer__stg_core__member_month')
+        format: sql
+        rows: |
+          select
+              'member-month-a' as member_month_id
+            , 'shared-person' as person_id
+            , '202501' as year_month
+            , 'shared-payer' as payer
+            , 'source-a' as data_source
+          union all
+          select
+              'member-month-b'
+            , 'shared-person'
+            , '202501'
+            , 'shared-payer'
+            , 'source-b'
+      - input: ref('semantic_layer__stg_cms_hcc__patient_risk_scores_monthly')
+        format: sql
+        rows: |
+          select
+              'shared-person' as person_id
+            , 'shared-payer' as payer
+            , 'source-a' as data_source
+            , 'community' as risk_model_code
+            , cast('2025-01-31' as date) as collection_end_date
+            , cast(1.0 as numeric) as normalized_risk_score
+          union all
+          select
+              'shared-person'
+            , 'shared-payer'
+            , 'source-b'
+            , 'institutional'
+            , cast('2025-01-31' as date)
+            , cast(4.0 as numeric)
+          union all
+          select
+              'other-person'
+            , 'shared-payer'
+            , 'source-a'
+            , 'community'
+            , cast('2025-01-31' as date)
+            , cast(3.0 as numeric)
+    expect:
+      rows:
+        - member_month_id: member-month-a
+          data_source: source-a
+          risk_model_code: community
+          normalized_risk_score: 1.0
+          population_normalized_risk_score: 0.5
+        - member_month_id: member-month-b
+          data_source: source-b
+          risk_model_code: institutional
+          normalized_risk_score: 4.0
+          population_normalized_risk_score: 1.0
+
+  - name: test_readmission_summary_preserves_upstream_source
+    description: >-
+      Reused encounter identifiers remain separate without an encounter-only
+      lookup against the augmented encounter relation.
+    model: semantic_layer__stg_readmissions__readmission_summary
+    given:
+      - input: ref('quality_measures', 'readmissions__readmission_summary')
+        format: sql
+        rows: |
+          select
+              'shared-encounter' as encounter_id
+            , 1 as index_admission_flag
+            , 1 as had_readmission_flag
+            , 0 as planned_flag
+            , 1 as readmit_30_flag
+            , 1 as unplanned_readmit_30_flag
+            , 'readmission-a' as readmission_encounter_id
+            , 10 as days_to_readmit
+            , cast('2025-02-01' as date) as readmission_admit_date
+            , cast('2025-02-03' as date) as readmission_discharge_date
+            , '01' as readmission_discharge_disposition_code
+            , 'facility-a' as readmission_facility
+            , 'ms-drg' as readmission_drg_code_type
+            , '001' as readmission_drg
+            , 2 as readmission_length_of_stay
+            , 1 as readmission_index_admission_flag
+            , 0 as readmission_planned_flag
+            , 'medicine' as readmission_specialty_cohort
+            , 0 as readmission_died_flag
+            , 'ccsr-a' as readmission_diagnosis_ccs
+            , 'source-a' as data_source
+          union all
+          select
+              'shared-encounter', 1, 0, 0, 0, 0, null, null
+            , cast(null as date), cast(null as date), null, null, null, null
+            , null, null, null, null, null, null, 'source-b'
+    expect:
+      rows:
+        - encounter_id: shared-encounter
+          data_source: source-a
+          readmission_encounter_id: readmission-a
+        - encounter_id: shared-encounter
+          data_source: source-b
+          readmission_encounter_id: null

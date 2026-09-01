@@ -37,7 +37,7 @@ SELECT
   , r.readmission_specialty_cohort
   , r.readmission_died_flag
   , r.readmission_diagnosis_ccs
-  , case when p.encounter_id is not null then 1 else 0 end as pqi_flag
+  , cast(case when p.encounter_id is not null then 1 else 0 end as {{ dbt.type_int() }}) as pqi_flag
   , p.pqi_number
   , p.pqi_name
   , e.paid_amount

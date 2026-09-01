@@ -1,6 +1,7 @@
 SELECT
     rf.person_id
   , rf.payer
+  , rf.data_source
   , rf.factor_type
   , rf.risk_factor_description
   , rf.coefficient

@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: semantic_layer__int_encounter_enrichment
+    description: >-
+      Source-scoped encounter and provider attributes with diagnosis CCSR
+      enrichment restricted to ICD-10-CM codes.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [encounter_id, data_source]
+
+  - name: semantic_layer__int_member_month_risk
+    description: >-
+      Source-scoped CMS-HCC risk enrichment at the authoritative Core
+      member-month grain.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [member_month_id, data_source]
+    columns:
+      - name: member_month_id
+        description: Authoritative Core member-month identifier.
+        data_tests: [not_null]
+      - name: data_source
+        description: Source-system identifier for the member month and HCC result.
+        data_tests: [not_null]

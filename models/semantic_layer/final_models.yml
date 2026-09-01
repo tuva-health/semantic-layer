@@ -49,6 +49,11 @@ models:
       - name: data_source
         description: Source-system identifier for the encounter.
         data_tests: [not_null]
+      - name: pqi_flag
+        description: Integer indicator that the encounter meets an AHRQ PQI definition.
+        config:
+          meta:
+            data_type: integer
 
   - name: semantic_layer__dim_encounter_type
     description: Stable semantic keys and group mappings for Tuva encounter types.
@@ -106,6 +111,10 @@ models:
     description: Claim-derived inpatient admission, readmission, and AHRQ PQI classifications at encounter and PQI grain.
     config:
       alias: fact_admissions
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [encounter_id, data_source, pqi_number]
     columns:
       - name: encounter_id
         description: Core encounter identifier.
@@ -115,7 +124,10 @@ models:
         data_tests: [not_null]
 
   - name: semantic_layer__fact_claims
-    description: Enrolled medical claim lines enriched with encounter, provider, service-category, and CCSR attributes.
+    description: >-
+      Enrolled medical claim lines enriched with encounter, provider, and
+      service-category attributes, plus CCSR attributes for ICD-10-CM primary
+      diagnoses.
     config:
       alias: fact_claims
     data_tests:
@@ -126,6 +138,8 @@ models:
       - name: medical_claim_id
         description: Core medical-claim line identifier.
         data_tests: [not_null]
+      - name: primary_diagnosis_code_type
+        description: Code system for the encounter's primary diagnosis.
       - name: member_month_id
         description: Authoritative Core member-month identifier when enrollment is available.
         data_tests:
@@ -185,13 +199,17 @@ models:
                 field: encounter_type_sk
 
   - name: semantic_layer__fact_hcc_gaps
-    description: HCC suspecting gaps at person, payer, model-version, and HCC grain.
+    description: HCC suspecting gaps at source, person, payer, model-version, and HCC grain.
     config:
       alias: fact_hcc_gaps
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
-            combination_of_columns: [person_id, payer, model_version, hcc_code]
+            combination_of_columns: [person_id, payer, data_source, model_version, hcc_code]
+    columns:
+      - name: data_source
+        description: Source-system identifier that scopes the person and payer.
+        data_tests: [not_null]
 
   - name: semantic_layer__fact_member_months
     description: Cost and monthly CMS-HCC risk attributes at Core's full member-month coverage grain.
@@ -209,6 +227,10 @@ models:
                 field: member_month_id
       - name: member_month_sk
         description: Deprecated compatibility key formed only from person ID and year-month; it is not guaranteed unique.
+      - name: population_normalized_risk_score
+        description: >-
+          Member risk score divided by the average risk score for the same
+          year-month and data source.
 
   - name: semantic_layer__fact_pharmacy_claims
     description: |-
@@ -267,20 +289,53 @@ models:
         description: ATC level 4 chemical, therapeutic, or pharmacological subgroup name from the selected CodeRx class.
 
   - name: semantic_layer__fact_quality_measures
-    description: Person-level quality-measure results by performance period.
+    description: Source-scoped person-level quality-measure results by performance period.
     config:
       alias: fact_quality_measures
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - data_source
+              - measure_id
+              - measure_version
+              - performance_period_begin
+              - performance_period_end
+    columns:
+      - name: data_source
+        description: Source-system identifier that scopes the person.
+        data_tests: [not_null]
 
   - name: semantic_layer__fact_risk_factors
-    description: CMS-HCC risk factors and coefficients by person, payer, model, and payment year.
+    description: CMS-HCC risk factors and coefficients by source, person, payer, model, and payment year.
     config:
       alias: fact_risk_factors
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - payer
+              - data_source
+              - factor_type
+              - risk_factor_description
+              - model_version
+              - payment_year
+    columns:
+      - name: data_source
+        description: Source-system identifier that scopes the person and payer.
+        data_tests: [not_null]
 
   - name: semantic_layer__fact_risk_scores
-    description: CMS-HCC risk scores by person, payer, and payment year.
+    description: CMS-HCC risk scores by source, person, payer, and payment year.
     config:
       alias: fact_risk_scores
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
-            combination_of_columns: [person_id, payer, payment_year]
+            combination_of_columns: [person_id, payer, data_source, payment_year]
+    columns:
+      - name: data_source
+        description: Source-system identifier that scopes the person and payer.
+        data_tests: [not_null]

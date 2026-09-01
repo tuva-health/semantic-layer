@@ -1,6 +1,7 @@
 SELECT
     rs.person_id
   , rs.payer
+  , rs.data_source
   , rs.v24_risk_score
   , rs.v28_risk_score
   , rs.blended_risk_score
