@@ -188,18 +188,23 @@ unit_tests:
             , 'community'
             , cast('2025-01-31' as date)
             , cast(3.0 as numeric)
+    # Normalize Redshift's actual/expected numeric scales at the comparison
+    # boundary. These binary-exact expected values still use exact equality.
     expect:
-      rows:
-        - member_month_id: member-month-a
-          data_source: source-a
-          risk_model_code: community
-          normalized_risk_score: 1.0
-          population_normalized_risk_score: 0.5
-        - member_month_id: member-month-b
-          data_source: source-b
-          risk_model_code: institutional
-          normalized_risk_score: 4.0
-          population_normalized_risk_score: 1.0
+      format: sql
+      rows: |
+        {% set numeric_type = 'numeric' if target.type == 'bigquery' else ('double precision' if target.type == 'redshift' else 'decimal(28,6)') %}
+        select
+            'member-month-a' as member_month_id
+          , 'source-a' as data_source
+          , 'community' as risk_model_code
+          , cast(1.0 as {{ numeric_type }}) as normalized_risk_score
+          , cast(0.5 as {{ numeric_type }}) as population_normalized_risk_score
+        union all
+        select
+            'member-month-b', 'source-b', 'institutional'
+          , cast(4.0 as {{ numeric_type }})
+          , cast(1.0 as {{ numeric_type }})
 
   - name: test_readmission_summary_preserves_upstream_source
     description: >-
