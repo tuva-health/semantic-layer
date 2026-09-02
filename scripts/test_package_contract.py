@@ -33,12 +33,11 @@ class PackageContractTest(unittest.TestCase):
             'require-dbt-version: ">=1.10.5,<3.0.0"',
             project_text,
         )
+        packages_text = (ROOT / "packages.yml").read_text()
+        self.assertIn('- ">=1.3.2"', packages_text)
+        self.assertIn('- "<2.0.0"', packages_text)
         self.assertIn(
-            'version: "1.2.1"',
-            (ROOT / "packages.yml").read_text(),
-        )
-        self.assertIn(
-            "| `dbt_utils` | 1.2.1 | dbt Hub release |",
+            "| `dbt_utils` | >=1.3.2,<2.0.0 | dbt Hub release range |",
             (ROOT / "README.md").read_text(),
         )
 
