@@ -64,8 +64,32 @@ class PackageContractTest(unittest.TestCase):
             "run: python3 scripts/test_package_contract.py",
             workflow,
         )
-        self.assertIn("- 'integration_tests/packages.yml'", workflow)
+        self.assertIn("- 'integration_tests/**'", workflow)
         self.assertIn("- 'seeds/**'", workflow)
+
+    def test_ci_executes_the_locked_semantic_graph_for_model_changes(self):
+        workflow = (
+            ROOT / ".github" / "workflows" / "package-contract.yml"
+        ).read_text()
+
+        for watched_path in ("models/**", "tests/**", "integration_tests/**"):
+            self.assertIn(f"- '{watched_path}'", workflow)
+        self.assertIn("uses: actions/setup-python@", workflow)
+        self.assertIn('"dbt-core==${DBT_CORE_VERSION}"', workflow)
+        self.assertIn('"dbt-duckdb==${DBT_DUCKDB_VERSION}"', workflow)
+        self.assertIn("run: scripts/dbt-local deps", workflow)
+        self.assertIn(
+            "scripts/dbt-local build --full-refresh --indirect-selection cautious",
+            workflow,
+        )
+        self.assertIn("--select +package:semantic_layer", workflow)
+        self.assertTrue((ROOT / ".github" / "profiles" / "profiles.yml").exists())
+
+    def test_root_license_matches_the_preserved_apache_license(self):
+        self.assertEqual(
+            (ROOT / "LICENSE.txt").read_text(),
+            (ROOT / "license" / "license-2.0.txt").read_text(),
+        )
 
     def test_integration_pins_match_the_readme_compatibility_set(self):
         packages_text = (ROOT / "integration_tests" / "packages.yml").read_text()

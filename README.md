@@ -39,12 +39,12 @@ latest 1.0.0 changes.
 
 | dbt package | Version | Tested revision |
 | --- | --- | --- |
-| `the_tuva_project` (Tuva Core) | 1.0.0 | `d7f1ed0227003cba85914aadf8c2164320e52c77` |
-| `ahrq_quality_indicators` | 1.0.0 | `42a6b42666cb47877b0d96e4d0ee90e44fb0e971` |
-| `ccsr` | 1.0.0 | `813acf1eb567dba0429e3664796ea6006f216bfd` |
-| `cms_hcc` | 1.0.0 | `4f2454fd73b8d0e63ad0a61fa6309ef200d99caf` |
-| `nyu_ed_classification` | 1.0.0 | `c3ac03dbfb214264ecefdbfca04e18cef2a77013` |
-| `quality_measures` | 1.0.0 | `db8168b28226a1b605f294bc7cc15c88abe8032a` |
+| `the_tuva_project` (Tuva Core) | 1.0.0 | `49b561b7b4e0789c133b257997075a8f12eb1ee3` |
+| `ahrq_quality_indicators` | 1.0.0 | `fcded948719d9c4527fbb3edc8aa1208a4ab66fb` |
+| `ccsr` | 1.0.0 | `26e61c97c251cf4377709ccd7f6a0075188906ad` |
+| `cms_hcc` | 1.0.0 | `5e3062d86d51caa63861dfe7313dfedcf9e679c3` |
+| `nyu_ed_classification` | 1.0.0 | `a2145284ebf2da4fc36ce1984cb521bfd1973bb9` |
+| `quality_measures` | 1.0.0 | `84458c6b0810f75a4ec65d3accbad0a97ec881ed` |
 | `dbt_utils` | 1.2.1 | dbt Hub release |
 
 The exact Git pins used by the harness are in
@@ -110,26 +110,24 @@ The Semantic Layer does not read either CodeRx asset family directly, so this
 switch applies consistently to Core pharmacy normalization, logical data
 quality, medication enrichment, and `fact_pharmacy_claims`.
 
-## Known source-scoping limitations
+## Source-scoping contract
 
-These outputs preserve the current upstream contracts and therefore cannot yet
-be fully separated by `data_source`:
+The tested dependency set publishes source-scoped AHRQ PQI, readmission,
+quality-measure, CMS-HCC, HCC-suspecting, NYU ED, and Core contracts. Semantic
+Layer joins and grains preserve `data_source` wherever a person, encounter,
+claim, provider, or coverage identity is source-native. In particular:
 
-- Upstream readmission sequencing partitions by `person_id`, and several
-  upstream joins use `encounter_id`, without `data_source`. The semantic fact
-  retains only source-matched claim encounters afterward, but that cannot undo
-  cross-source sequencing or attribution already computed upstream. Reused
-  person or encounter IDs can therefore affect readmission results.
-- `fact_quality_measures` has no `data_source` because the upstream long-form
-  quality summary does not expose one.
-- `fact_risk_scores`, `fact_risk_factors`, and `fact_hcc_gaps` have no
-  `data_source` because the CMS-HCC outputs are scoped by person and payer/model
-  context instead. Monthly HCC scores joined into `fact_member_months` share
-  the same limitation and can apply across matching source-specific coverage
-  rows.
+- admission, encounter, claim, ED-visit, and encounter-provider joins use
+  `encounter_id` together with `data_source`;
+- quality-measure, annual risk, risk-factor, and HCC-gap facts publish
+  `data_source` as part of their tested grain; and
+- monthly risk and cost enrichment joins to the complete Core member-month
+  coverage identity without crossing sources.
 
-Do not treat these facts as source-isolated when person or encounter identifiers
-can overlap across input sources.
+Reference dimensions such as date, encounter type, encounter group, and
+service category are intentionally source-neutral. The deprecated
+`member_month_sk` compatibility field is still not guaranteed unique; new
+work should use Core's `member_month_id`.
 
 ## Local validation
 

@@ -1,14 +1,14 @@
 packages:
   - git: "https://github.com/tuva-health/tuva-core.git"
-    revision: d7f1ed0227003cba85914aadf8c2164320e52c77
+    revision: 49b561b7b4e0789c133b257997075a8f12eb1ee3
   - git: "https://github.com/tuva-health/ahrq_quality_indicators.git"
-    revision: 42a6b42666cb47877b0d96e4d0ee90e44fb0e971
+    revision: fcded948719d9c4527fbb3edc8aa1208a4ab66fb
   - git: "https://github.com/tuva-health/ccsr.git"
-    revision: 813acf1eb567dba0429e3664796ea6006f216bfd
+    revision: 26e61c97c251cf4377709ccd7f6a0075188906ad
   - git: "https://github.com/tuva-health/cms_hcc.git"
-    revision: 4f2454fd73b8d0e63ad0a61fa6309ef200d99caf
+    revision: 5e3062d86d51caa63861dfe7313dfedcf9e679c3
   - git: "https://github.com/tuva-health/nyu_ed_classification.git"
-    revision: c3ac03dbfb214264ecefdbfca04e18cef2a77013
+    revision: a2145284ebf2da4fc36ce1984cb521bfd1973bb9
   - git: "https://github.com/tuva-health/quality_measures.git"
-    revision: db8168b28226a1b605f294bc7cc15c88abe8032a
+    revision: 84458c6b0810f75a4ec65d3accbad0a97ec881ed
   - local: ../
