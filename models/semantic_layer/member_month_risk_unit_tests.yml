@@ -20,13 +20,13 @@ unit_tests:
             , cast('2025-06-01' as date) as evidence_date
             , 'evidence-a' as evidence_value
             , cast(null as date) as exclusion_date
-            , null as exclusion_reason
+            , cast(null as {{ 'string' if target.type in ['bigquery', 'databricks'] else 'varchar' }}) as exclusion_reason
             , cast('2025-01-01' as date) as performance_period_begin
             , cast('2025-12-31' as date) as performance_period_end
             , 'measure-1' as measure_id
             , 'Measure One' as measure_name
             , '2025' as measure_version
-            , null as tuva_last_run
+            , cast(null as {{ 'datetime2(0)' if target.type in ['fabric', 'sqlserver'] else 'timestamp' }}) as tuva_last_run
           union all
           select
               'shared-person', 'source-b', 1, 0, 0, 0
@@ -65,7 +65,7 @@ unit_tests:
             , 15.6 as payment_risk_score_weighted_by_months
             , 12 as member_months
             , 2025 as payment_year
-            , null as tuva_last_run
+            , cast(null as {{ 'datetime2(0)' if target.type in ['fabric', 'sqlserver'] else 'timestamp' }}) as tuva_last_run
           union all
           select
               'shared-person', 'shared-payer', 'source-b'
