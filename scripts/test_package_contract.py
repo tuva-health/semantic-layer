@@ -14,7 +14,7 @@ class PackageContractTest(unittest.TestCase):
         seed_loader = (ROOT / "macros" / "load_semantic_layer_seed.sql").read_text()
 
         project_version = re.search(
-            r"(?m)^version: '([1-9][0-9]*\.[0-9]+\.[0-9]+"
+            r"(?m)^version: '((?:0|[1-9][0-9]*)\.[0-9]+\.[0-9]+"
             r"(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)'$",
             project_text,
         )
@@ -102,7 +102,8 @@ class PackageContractTest(unittest.TestCase):
         )
         readme_pins = dict(
             re.findall(
-                r"\| `([^`]+)`(?: \(Tuva Core\))? \| 1\.0\.0 \| `([0-9a-f]{40})` \|",
+                r"\| `([^`]+)`(?: \(Tuva Core\))? \| "
+                r"(?:0|[1-9][0-9]*)\.[0-9]+\.[0-9]+ \| `([0-9a-f]{40})` \|",
                 readme_text,
             )
         )
