@@ -1,6 +1,7 @@
 # Tuva Semantic Layer
 
-[Documentation](https://www.thetuvaproject.com/semantic-layer) |
+[Installation](#installation) |
+[Migration](#migration-from-the-v0180-mart) |
 [Source](https://github.com/tuva-health/semantic-layer)
 
 `semantic_layer` is the standalone dbt package that replaces the semantic-layer
@@ -12,7 +13,7 @@ analytics-oriented star schema over Core and selected standalone marts.
 
 - Repository and folder: `semantic-layer`
 - dbt project/package name: `semantic_layer`
-- Package version: `0.1.0`
+- Package version: `1.0.0`
 - Default output schema: `semantic_layer`, or
   `<tuva_schema_prefix>_semantic_layer` when a prefix is configured
 - Required domain: claims (`claims_enabled: true`)
@@ -52,32 +53,46 @@ claims-based encounter facts.
 
 ## Installation
 
-Declare the compatible package set once in the consuming project's
-`packages.yml`. Do not add a second copy of Tuva Core within an individual mart.
-After the Tuva 1.0 releases are available on dbt Hub, the installation is:
+Declare Tuva Core and the required packages once in the root project's
+`packages.yml`. Use the immutable 1.0 release tags:
+
+```yaml
+packages:
+  - git: "https://github.com/tuva-health/tuva-core.git"
+    revision: "v1.0.0"
+  - git: "https://github.com/tuva-health/ahrq_quality_indicators.git"
+    revision: "v1.0.0"
+  - git: "https://github.com/tuva-health/ccsr.git"
+    revision: "v1.0.0"
+  - git: "https://github.com/tuva-health/cms_hcc.git"
+    revision: "v1.0.0"
+  - git: "https://github.com/tuva-health/nyu_ed_classification.git"
+    revision: "v1.0.0"
+  - git: "https://github.com/tuva-health/quality_measures.git"
+    revision: "v1.0.0"
+  - git: "https://github.com/tuva-health/semantic-layer.git"
+    revision: "v1.0.0"
+```
+
+After these releases are available on dbt Hub, the equivalent installation is:
 
 ```yaml
 packages:
   - package: tuva-health/the_tuva_project
     version: 1.0.0
   - package: tuva-health/ahrq_quality_indicators
-    version: 0.1.0
+    version: 1.0.0
   - package: tuva-health/ccsr
-    version: 0.1.0
+    version: 1.0.0
   - package: tuva-health/cms_hcc
-    version: 0.1.0
+    version: 1.0.0
   - package: tuva-health/nyu_ed_classification
-    version: 0.1.0
+    version: 1.0.0
   - package: tuva-health/quality_measures
-    version: 0.1.0
+    version: 1.0.0
   - package: tuva-health/semantic_layer
-    version: 0.1.0
+    version: 1.0.0
 ```
-
-During the Tuva 1.0 prerelease window, use the same topology with exact Git
-tags or verified commits from the corresponding `tuva-health` repositories.
-The immutable revisions used by this repository's integration harness are
-listed below.
 
 Install dependencies and build the required upstream graph from the root
 project:
@@ -89,9 +104,9 @@ dbt build --select +package:semantic_layer
 
 ## Tested compatibility set
 
-The local integration harness tests this immutable dependency set. Tuva Core is
-pinned to the listed commit from the `tuva-core` `main` branch containing the
-latest 1.0.0 changes.
+The local integration harness retains this immutable prerelease dependency
+set as its validation baseline. The 1.0 release installation above uses the
+release tags; the table records the exact earlier revisions used by the harness.
 
 | dbt package | Version | Tested revision |
 | --- | --- | --- |
@@ -104,8 +119,8 @@ latest 1.0.0 changes.
 | `dbt_utils` | >=1.3.2,<2.0.0 | dbt Hub release range |
 
 The exact Git pins used by the harness are in
-`integration_tests/packages.yml`. Production projects should use a documented
-compatible release set when these packages are released. Because these six
+`integration_tests/packages.yml`. Production projects should use the 1.0
+release installation above. Because these six
 packages share the package-seed loader contract, refresh their pins together
 whenever that contract changes.
 
