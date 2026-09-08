@@ -30,7 +30,7 @@ class PackageContractTest(unittest.TestCase):
             r"^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$",
         )
         self.assertIn(
-            'require-dbt-version: ">=1.10.5,<3.0.0"',
+            'require-dbt-version: [">=1.10.5", "<3.0.0"]',
             project_text,
         )
         packages_text = (ROOT / "packages.yml").read_text()
