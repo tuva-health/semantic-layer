@@ -41,8 +41,6 @@ vars:
     wide_condition_enabled: false      # The semantic layer needs only the long diagnosis mapping.
     wide_procedure_enabled: false      # The semantic layer does not consume procedure CCSR outputs.
     record_type: ip                    # Category logic: ip (inpatient) or op (outpatient).
-    dxccsr_version: "'2023.1'"         # HCUP diagnosis CCSR version stored in package outputs.
-    prccsr_version: "'2023.1'"         # HCUP procedure CCSR version stored in package outputs.
 
   cms_hcc:
     cms_hcc_payment_year: 2018         # Matches the shipped small synthetic dataset.

@@ -54,7 +54,9 @@ claims-based encounter facts.
 ## Installation
 
 Declare Tuva Core and the required packages once in the root project's
-`packages.yml`. Use the immutable 1.0 release tags:
+`packages.yml`. The root project owns this package set. For the CCSR 2.0
+upgrade, use its immutable `v2.0.0` release tag once available alongside the
+other packages' 1.0 release tags:
 
 ```yaml
 packages:
@@ -63,7 +65,7 @@ packages:
   - git: "https://github.com/tuva-health/ahrq_quality_indicators.git"
     revision: "v1.0.0"
   - git: "https://github.com/tuva-health/ccsr.git"
-    revision: "v1.0.0"
+    revision: "v2.0.0"
   - git: "https://github.com/tuva-health/cms_hcc.git"
     revision: "v1.0.0"
   - git: "https://github.com/tuva-health/nyu_ed_classification.git"
@@ -83,7 +85,7 @@ packages:
   - package: tuva-health/ahrq_quality_indicators
     version: 1.0.0
   - package: tuva-health/ccsr
-    version: 1.0.0
+    version: 2.0.0
   - package: tuva-health/cms_hcc
     version: 1.0.0
   - package: tuva-health/nyu_ed_classification
@@ -104,25 +106,33 @@ dbt build --select +package:semantic_layer
 
 ## Tested compatibility set
 
-The local integration harness retains this immutable prerelease dependency
-set as its validation baseline. The 1.0 release installation above uses the
-release tags; the table records the exact earlier revisions used by the harness.
+The local integration harness pins the exact revisions below. It validates the
+CCSR 2.0 update against the retained dependency baseline; the installation
+examples above use release tags once available.
 
 | dbt package | Version | Tested revision |
 | --- | --- | --- |
 | `the_tuva_project` (Tuva Core) | 1.0.0 | `818191853771dec267fd9d6fe0edd68be74308e6` |
 | `ahrq_quality_indicators` | 0.1.0 | `0946e1c4d184024f91467dd08cc6d0be4f126da9` |
-| `ccsr` | 0.1.0 | `768a4aa03df951c10638f54c85d3db9ec246a5cc` |
+| `ccsr` | 2.0.0 | `ec7cc6fd920840a7e32a60b4f3ee47ca22357098` |
 | `cms_hcc` | 0.1.0 | `3b249b52ab428771548d1a52ade7b6e291ab8667` |
 | `nyu_ed_classification` | 0.1.0 | `e2dbeb93e96f97b3d42b30ea57dc3c52aa610eba` |
 | `quality_measures` | 0.1.0 | `88e490409e4ff5cd0ee7b61e189d88548daec76f` |
 | `dbt_utils` | >=1.3.2,<2.0.0 | dbt Hub release range |
 
 The exact Git pins used by the harness are in
-`integration_tests/packages.yml`. Production projects should use the 1.0
-release installation above. Because these six
-packages share the package-seed loader contract, refresh their pins together
-whenever that contract changes.
+`integration_tests/packages.yml`. Production projects should use the release
+installation above. These six packages share the package-seed loader contract;
+refresh their pins together when that contract changes. The CCSR 2.0 mapping
+update preserves that loader contract and does not require changing the other
+pins.
+
+CCSR 2.0 uses the AHRQ v2027.1 mappings and its own asset version defaults.
+Remove root-project overrides that retain the 2023.1 version labels or CCSR
+asset 1.0.0 when upgrading. Rebuild the CCSR mapping and dependent Semantic
+Layer models so `fact_claims` receives the current diagnosis categories.
+Semantic Layer consumes the first-ranked diagnosis category from CCSR's long
+mapping; it does not depend on the changed wide category columns.
 
 ## Migration from the v0.18.0 mart
 
